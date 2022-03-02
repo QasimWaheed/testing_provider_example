@@ -1,8 +1,8 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
+import 'services/bread_crumb_provider.dart';
+import 'ui/add_new_bread_crumb.dart';
+import 'ui/bread_crumb_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         ),
         home: const MyHomePage(),
         routes: {
-          '/new': (context) => const Material(),
+          '/new': (context) => const NewBreadCrumbWidget(),
         },
       ),
     );
@@ -40,7 +40,19 @@ class MyHomePage extends StatelessWidget {
         title: const Text("Home Page"),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // const SizedBox(height: 6,),
+          Consumer<BreadCrumbProvider>(
+            builder: (context, value, child) {
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: BreadCrumbWidget(breadCrumbs: value.items, onBreadCrumbTapped: (value) {
+
+                }),
+              );
+            },
+          ),
           Center(
             child: TextButton(
               onPressed: () {
@@ -49,11 +61,13 @@ class MyHomePage extends StatelessWidget {
               child: const Text("Add new bread crumb"),
             ),
           ),
-          TextButton(
-            onPressed: () {
-              context.read<BreadCrumbProvider>().reset();
-            },
-            child: const Text("Reset"),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                context.read<BreadCrumbProvider>().reset();
+              },
+              child: const Text("Reset"),
+            ),
           ),
         ],
       ),
@@ -61,65 +75,10 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-class BreadCrumb {
-  bool isActive;
-  final String name;
-  final String uuid;
 
-  BreadCrumb({required this.isActive, required this.name})
-      : uuid = const Uuid().v4();
 
-  void activate() {
-    isActive = true;
-  }
 
-  @override
-  bool operator ==(covariant BreadCrumb other) => uuid == other.uuid;
 
-  @override
-  int get hashCode => uuid.hashCode;
 
-  String get title => name + (isActive ? ' > ' : "");
-}
 
-class BreadCrumbWidget extends StatelessWidget {
-  final UnmodifiableListView<BreadCrumb> breadCrumbs;
 
-  const BreadCrumbWidget({
-    Key? key,
-    required this.breadCrumbs,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      children: breadCrumbs.map((breadCrumb) {
-        return Text(
-          breadCrumb.title,
-          style: TextStyle(
-            color: breadCrumb.isActive ? Colors.blue : Colors.black,
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class BreadCrumbProvider extends ChangeNotifier {
-  final List<BreadCrumb> _items = [];
-
-  UnmodifiableListView<BreadCrumb> get items => UnmodifiableListView(_items);
-
-  void add(BreadCrumb breadCrumb) {
-    for (final item in items) {
-      item.activate();
-    }
-    _items.add(breadCrumb);
-    notifyListeners();
-  }
-
-  void reset() {
-    _items.clear();
-    notifyListeners();
-  }
-}
